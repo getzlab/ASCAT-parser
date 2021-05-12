@@ -1,9 +1,5 @@
-import seaborn, pandas
-import matplotlib.pyplot as plt
+import pandas
 import numpy
-plt.style.use('ggplot')
-plt.rcParams['figure.figsize'] = [12, 8]
-plt.rcParams['figure.dpi'] = 80 # 200 e.g. is really fine, but slower
 import scipy
 
 def is_between(s, lower, upper):
