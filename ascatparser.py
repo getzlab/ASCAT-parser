@@ -6,6 +6,8 @@ plt.rcParams['figure.figsize'] = [12, 8]
 plt.rcParams['figure.dpi'] = 80 # 200 e.g. is really fine, but slower
 import scipy
 
+def is_between(s, lower, upper):
+    return (lower <= s) & (upper >= s)
 
 def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_path):
     #assert (len(sys.argv) == 4, 'Invalid inputs')  # caveman copy_number targets name_output
@@ -16,14 +18,24 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
     cp = pandas.read_csv(copynumber_path, sep='\t')
     cp_normal = pandas.read_csv(copynumber_normal_path, sep='\t')
     
+    # remove rows with nan in segmented baf
+    cp = cp[~cp['segmented BAF'].isna()]
+    
     def hets(tumor, normal):
         def foo(x):
             thres = 0.1
             index = list()
             for i, row in x[[c for c in x.columns if 'Count' in c]].iterrows():
-                temp = sorted(row, reverse=True)[:2]
+                temp = sorted(row, reverse=True)
+                
+                if sum(temp) == 0 or temp[2]/sum(temp) > 0.01:
+                    index.append(False)
+                    continue
+                    
+                temp = temp[:2]
                 phet = scipy.stats.beta.cdf(0.5, temp[0] + 1, temp[1] + 1)
-                index.append( ((phet > thres) or ((1-phet) > thres)) and (sum(temp) >= 50))
+                index.append( ((phet > thres) or ((1-phet) > thres)) and (sum(temp) >= 20))
+                
             return x[index]
                 
 
@@ -65,7 +77,7 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
                                    (targets['start_bp'] >= row['start_bp']) & 
                                    (targets['end_bp'] <= row['end_bp']) ].shape[0],
                'n_hets': selected.shape[0],
-               'f': selected['BAF'].mean(),
+               'f': (selected[selected['BAF']<=0.5]['BAF'].mean() + (1-selected[selected['BAF'] > 0.5]['BAF']).mean()) / 2.0, # mean if < 0.5 + mean 1-baf if >0.5
                'tau': 2 * 2 ** selected['segmented LogR'].mean(),
                'cp_major_tumor': row['cp_major_tumor'],
                'cp_minor_tumor': row['cp_minor_tumor']
