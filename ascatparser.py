@@ -17,7 +17,7 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
     cp_normal = pandas.read_csv(copynumber_normal_path, sep='\t')
     
     # remove rows with nan in segmented baf
-    cp = cp[~(cp['segmented LogR'].isna() | cp['BAF'].isna())]
+    cp = cp[~(cp['segmented LogR'].isna() | cp['segmented BAF'].isna())]
     
     def hets(tumor, normal):
         def foo(x):
@@ -68,7 +68,7 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
                       (cp['Chromosome'] == int(row['chromosome']))
                      & (cp['BAF'] < 0.95) & (cp['BAF'] > 0.05)]
 
-        selected[selected['BAF'] > 0.5]['BAF'] = 1 - selected[selected['BAF'] > 0.5]['BAF']
+        selected.loc[selected['BAF'] > 0.5, 'BAF'] = 1 - selected[selected['BAF'] > 0.5]['BAF'].to_numpy()
         
         aux = {'Chromosome': int(row['chromosome']),
                'Start.bp': row['start_bp'],
@@ -77,14 +77,11 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
                                    (targets['start_bp'] >= row['start_bp']) & 
                                    (targets['end_bp'] <= row['end_bp']) ].shape[0],
                'n_hets': selected.shape[0],
-               'f': selected['BAF'].mean(),  # (selected[selected['BAF']<=0.5]['BAF'] + (1-selected[selected['BAF'] > 0.5]['BAF'])).mean(), # mean if < 0.5 + mean 1-baf if >0.5
+               'f': selected['segmented BAF'].mean(),  # (selected[selected['BAF']<=0.5]['BAF'] + (1-selected[selected['BAF'] > 0.5]['BAF'])).mean(), # mean if < 0.5 + mean 1-baf if >0.5
                'tau': 2 * 2 ** selected['segmented LogR'].mean(),
                'cp_major_tumor': row['cp_major_tumor'],
                'cp_minor_tumor': row['cp_minor_tumor']
         }
-        
-        if aux['f'] == 0.5:
-            print(aux, '\n\n')
 
         parsed = parsed.append(aux.copy(), ignore_index=True, verify_integrity=True)
 
