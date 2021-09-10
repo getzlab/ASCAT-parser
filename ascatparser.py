@@ -2,13 +2,13 @@ import pandas
 import numpy
 import scipy
 import scipy.stats
+import sys
 
 
 def is_between(s, lower, upper):
     return (lower <= s) & (upper >= s)
 
-def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_path):
-    #assert (len(sys.argv) == 4, 'Invalid inputs')  # caveman copy_number targets name_output
+def parser(caveman_path, copynumber_path, copynumber_normal_path):
     caveman = pandas.read_csv(caveman_path,
                               names=['chromosome', 'start_bp', 'end_bp', 'cp_major_normal', 'cp_minor_normal',
                                      'cp_major_tumor', 'cp_minor_tumor'])
@@ -48,9 +48,8 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
         return tt.isin(tn)
     
     cp = cp[hets(cp, cp_normal)]
+    cp = cp[~cp['Chromosome'].astype(str).str.contains("X|Y|M")]
     
-    targets = pandas.read_csv(targets_path, low_memory=False)
-
     parsed = pandas.DataFrame(
         columns=['Chromosome', 'Start.bp', 'End.bp', 'n_probes', 'length', 'n_hets', 'f',
                  'tau', 'sigma.tau', 'mu.minor', 'sigma.minor', 'mu.major', 'sigma.major','cp_major_tumor', 'cp_minor_tumor'])
@@ -61,23 +60,23 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
                      'tau', 'sigma.tau', 'mu.minor', 'sigma.minor', 'mu.major', 'sigma.major', 'cp_major_tumor',
                      'cp_minor_tumor'])
 
-        if row['chromosome'] in ['X', 'Y', 'MT']:
+        if row['chromosome'] in ['X', 'Y', 'MT']:  # redundant legacy check
             continue
 
         selected = cp[(cp['Position'] >= row['start_bp']) & (cp['Position'] <= row['end_bp']) & 
                       (cp['Chromosome'] == int(row['chromosome']))
-                     & (cp['BAF'] < 0.95) & (cp['BAF'] > 0.05)]
+                     & (cp['BAF'] < 0.95) & (cp['BAF'] > 0.05)] # remove extreme values
 
         selected.loc[selected['BAF'] > 0.5, 'BAF'] = 1 - selected[selected['BAF'] > 0.5]['BAF'].to_numpy()
         
         aux = {'Chromosome': int(row['chromosome']),
                'Start.bp': row['start_bp'],
                'End.bp': row['end_bp'],
-               'n_probes': targets[(targets['chromosome'] == row['chromosome']) & 
-                                   (targets['start_bp'] >= row['start_bp']) & 
-                                   (targets['end_bp'] <= row['end_bp']) ].shape[0],
+               'n_probes': cp[(cp['Chromosome'].astype('int') == int(row['chromosome'])) & 
+                                   (cp['Position'] >= row['start_bp']) & 
+                                   (cp['Position'] <= row['end_bp']) & (cp['BAF'] <= 1) & (cp['BAF'] >= 0) ].shape[0],
                'n_hets': selected.shape[0],
-               'f': selected['segmented BAF'].mean(),  # (selected[selected['BAF']<=0.5]['BAF'] + (1-selected[selected['BAF'] > 0.5]['BAF'])).mean(), # mean if < 0.5 + mean 1-baf if >0.5
+               'f': selected['segmented BAF'].mean(), # mean if < 0.5 + mean 1-baf if >0.5
                'tau': 2 * 2 ** selected['segmented LogR'].mean(),
                'cp_major_tumor': row['cp_major_tumor'],
                'cp_minor_tumor': row['cp_minor_tumor']
@@ -85,13 +84,14 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
 
         parsed = parsed.append(aux.copy(), ignore_index=True, verify_integrity=True)
 
-    parsed['mu.minor'] = parsed['tau'] * parsed['f']  # numpy.minimum(parsed['f'], (1 - parsed['f'])) # TODO ensure < 0.5
-    parsed['mu.major'] = parsed['tau'] * (1 - parsed['f'])  # numpy.maximum(parsed['f'], (1 - parsed['f']))
+    parsed = parsed[parsed['n_hets'] > 1]  # cleanup missed sites
+
+    parsed['mu.minor'] = parsed['tau'] * parsed['f']  
+    parsed['mu.major'] = parsed['tau'] * (1 - parsed['f'])  
     parsed['length'] = parsed['End.bp'] - parsed['Start.bp']
 
     means = parsed[(is_between(parsed['tau'], 1.8, 2.2))]['tau']
-    # parsed.iloc[means.index]['sigma_tau', 'sigma_minor', 'sigma_major'] = parsed.iloc[means.index]['tau', 'mu_minor', 'mu_major'].std()
-
+    print(parsed)
     denominator = parsed['n_probes'].sum() * ((parsed['n_probes'] != 0).sum() - 1) / (parsed['n_probes'] != 0).sum()
 
     t = numpy.sqrt(
@@ -114,3 +114,6 @@ def my_parser2(caveman_path, copynumber_path, copynumber_normal_path, targets_pa
     parsed[["Chromosome", "Start.bp", "End.bp", "n_probes", "length", "n_hets"]] = parsed[["Chromosome", "Start.bp", "End.bp", "n_probes", "length", "n_hets"]].astype('int')
 
     return parsed
+    
+if __name__ == '__main__':
+    parser(sys.argv[1], sys.argv[2], sys.argv[3]).to_csv(sys.argv[4], sep='\t')
