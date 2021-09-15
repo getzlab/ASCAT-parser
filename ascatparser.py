@@ -47,6 +47,9 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
         
         return tt.isin(tn)
     
+    all_cp = cp.copy()
+    cp = all_cp[~all_cp['Chromosome'].astype(str).str.contains("X|Y|M")]
+    
     cp = cp[hets(cp, cp_normal)]
     cp = cp[~cp['Chromosome'].astype(str).str.contains("X|Y|M")]
     
@@ -67,14 +70,14 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
                       (cp['Chromosome'] == int(row['chromosome']))
                      & (cp['BAF'] < 0.95) & (cp['BAF'] > 0.05)] # remove extreme values
 
-        selected.loc[selected['BAF'] > 0.5, 'BAF'] = 1 - selected[selected['BAF'] > 0.5]['BAF'].to_numpy()
+        selected.loc[selected['BAF'] > 0.5, 'BAF'] = 1 - selected.loc[selected['BAF'] > 0.5]['BAF'].to_numpy()
         
         aux = {'Chromosome': int(row['chromosome']),
                'Start.bp': row['start_bp'],
                'End.bp': row['end_bp'],
-               'n_probes': cp[(cp['Chromosome'].astype('int') == int(row['chromosome'])) & 
-                                   (cp['Position'] >= row['start_bp']) & 
-                                   (cp['Position'] <= row['end_bp']) & (cp['BAF'] <= 1) & (cp['BAF'] >= 0) ].shape[0],
+               'n_probes': all_cp[(all_cp['Chromosome'].astype('int') == int(row['chromosome'])) & 
+                                   (all_cp['Position'] >= row['start_bp']) & 
+                                   (all_cp['Position'] <= row['end_bp']) ].shape[0],
                'n_hets': selected.shape[0],
                'f': selected['segmented BAF'].mean(), # mean if < 0.5 + mean 1-baf if >0.5
                'tau': 2 * 2 ** selected['segmented LogR'].mean(),
@@ -112,8 +115,22 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
     del parsed['cp_minor_tumor']
     
     parsed[["Chromosome", "Start.bp", "End.bp", "n_probes", "length", "n_hets"]] = parsed[["Chromosome", "Start.bp", "End.bp", "n_probes", "length", "n_hets"]].astype('int')
+    
+    parsed_gistic = parsed.copy()
+    
+    parsed_gistic['mean_log2_copy_ratio'] = list(map(lambda x: numpy.log( x / 2 ) / numpy.log(2), list(parsed_gistic['tau'])))
 
-    return parsed
+    parsed_gistic = parsed_gistic[['sample','Chromosome','Start.bp','End.bp','n_probes','mean_log2_copy_ratio']]
+
+    return parsed, parsed_gistic
+    
     
 if __name__ == '__main__':
-    parser(sys.argv[1], sys.argv[2], sys.argv[3]).to_csv(sys.argv[4], sep='\t')
+    #expect caveman_tumor, copynumber_tumor, copynumber_normal, allelic_output_path, gistic_output_path
+    assert len(sys.argv) == 7, 'Invalid number of arguments'
+
+    allelic_capseg, gistic = parser(sys.argv[1], sys.argv[2], sys.argv[3])
+    
+    allelic_capseg.to_csv(sys.argv[4], sep='\t')
+    
+    gistic.to_csv(sys.argv[5], sep='\t')
