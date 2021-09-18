@@ -13,7 +13,7 @@ task ascat_parser_task_1 {
 
     command {
         set -euo pipefail
-		echo $pwd
+		echo $PWD
         echo "ascat_caveman_file: ${ascat_caveman_file}"
         echo "ascat_copynumber_file: ${ascat_copynumber_file}"
         echo "ascat_copynumber_normal_file: ${ascat_copynumber_normal_file}"
