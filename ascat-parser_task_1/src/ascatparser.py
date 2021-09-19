@@ -109,7 +109,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
     parsed['sigma.minor'] = parsed['sigma.tau'].mul(parsed['f'])
     parsed['sigma.major'] = parsed['sigma.tau'].mul(1-parsed['f'])
 
-    parsed['sample'] = 'test'
+    parsed['sample'] = caveman_path.split('/')[-1].split('.')[0]
 
     del parsed['cp_major_tumor']
     del parsed['cp_minor_tumor']
@@ -131,6 +131,6 @@ if __name__ == '__main__':
 
     allelic_capseg, gistic = parser(sys.argv[1], sys.argv[2], sys.argv[3])
     
-    allelic_capseg.to_csv(sys.argv[4], sep='\t')
+    allelic_capseg.to_csv(sys.argv[4], sep='\t', index=False)
     
-    gistic.to_csv(sys.argv[5], sep='\t')
+    gistic.to_csv(sys.argv[5], sep='\t', index=False)
