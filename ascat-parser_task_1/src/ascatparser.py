@@ -5,10 +5,27 @@ import scipy.stats
 import sys
 
 
+def parse_args(argv):
+    output = argparse.ArgumentParser("ASCAT to Allelic Capseg/GISTIC format parser.")
+    
+    output.add_argument('caveman', type=str, help="ASCAT tumor copynumber.caveman output.")
+    output.add_argument('copynumber', type=str, help="ASCAT tumor copynumber.txt.gz output.")
+    output.add_argument('normal_copynumber', type=str, help="ASCAT normal copynumber output.")
+    
+    output.add_argument('allelic_output', type=str, help="Path for allelic capseg output.")
+    output.add_argument('gistic_output', type=str, help="Path for GISTIC output.")
+    
+    output.add_argument("--use-ascat-normalization", action="store_true", help="Use segmented BAF for f calculation.")
+    
+    return output.parse_args(argv)
+    
+def helper(args):
+    return parser(args.caveman, args.copynumber, args.normal_copynumber, args.use_ascat_normalization)
+
 def is_between(s, lower, upper):
     return (lower <= s) & (upper >= s)
 
-def parser(caveman_path, copynumber_path, copynumber_normal_path):
+def parser(caveman_path, copynumber_path, copynumber_normal_path, use_ascat_normalization=False):
     caveman = pandas.read_csv(caveman_path,
                               names=['chromosome', 'start_bp', 'end_bp', 'cp_major_normal', 'cp_minor_normal',
                                      'cp_major_tumor', 'cp_minor_tumor'])
@@ -70,7 +87,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
                       (cp['Chromosome'] == int(row['chromosome']))
                      & (cp['BAF'] < 0.95) & (cp['BAF'] > 0.05)] # remove extreme values
 
-        selected.loc[selected['BAF'] > 0.5, 'BAF'] = 1 - selected.loc[selected['BAF'] > 0.5]['BAF'].to_numpy()
+        selected.loc[selected['BAF'] > 0.5, 'BAF'] = 1 - selected.loc[selected['BAF'] > 0.5, 'BAF'].to_numpy()
         
         aux = {'Chromosome': int(row['chromosome']),
                'Start.bp': row['start_bp'],
@@ -79,7 +96,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
                                    (all_cp['Position'] >= row['start_bp']) & 
                                    (all_cp['Position'] <= row['end_bp']) ].shape[0],
                'n_hets': selected.shape[0],
-               'f': selected['segmented BAF'].mean(), # mean if < 0.5 + mean 1-baf if >0.5
+               'f': selected['segmented BAF'].mean() if use_ascat_normalization else selected['BAF'].mean(), # mean if < 0.5 + mean 1-baf if >0.5
                'tau': 2 * 2 ** selected['segmented LogR'].mean(),
                'cp_major_tumor': row['cp_major_tumor'],
                'cp_minor_tumor': row['cp_minor_tumor']
@@ -128,10 +145,10 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
     
 if __name__ == '__main__':
     #expect caveman_tumor, copynumber_tumor, copynumber_normal, allelic_output_path, gistic_output_path
-    assert len(sys.argv) == 7, 'Invalid number of arguments'
+    args = parse_args(sys.argv[1:])
 
-    allelic_capseg, gistic = parser(sys.argv[1], sys.argv[2], sys.argv[3])
+    allelic_capseg, gistic = helper(args)
     
-    allelic_capseg.to_csv(sys.argv[4], sep='\t', index=False)
+    allelic_capseg.to_csv(args.allelic_output, sep='\t', index=False)
     
-    gistic.to_csv(sys.argv[5], sep='\t', index=False)
+    gistic.to_csv(args.gistic_output, sep='\t', index=False)
