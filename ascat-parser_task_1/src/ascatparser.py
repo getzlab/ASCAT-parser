@@ -103,8 +103,9 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path):
 
     t = t * numpy.sqrt(means.shape[0] - 1)
 
-    denominator = parsed['n_probes']
+    denominator = numpy.sqrt(parsed['n_probes'])
     denominator[denominator == 0] = 1
+    
     parsed['sigma.tau'] = t / denominator
     parsed['sigma.minor'] = parsed['sigma.tau'].mul(parsed['f'])
     parsed['sigma.major'] = parsed['sigma.tau'].mul(1-parsed['f'])
