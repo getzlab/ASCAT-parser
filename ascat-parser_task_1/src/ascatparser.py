@@ -104,7 +104,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, use_ascat_norm
 
         parsed = parsed.append(aux.copy(), ignore_index=True, verify_integrity=True)
 
-    parsed = parsed[parsed['n_hets'] > 1]  # cleanup missed sites
+    parsed = parsed[parsed['n_hets'] > 0]  # cleanup missed sites
 
     parsed['mu.minor'] = parsed['tau'] * parsed['f']  
     parsed['mu.major'] = parsed['tau'] * (1 - parsed['f'])  
