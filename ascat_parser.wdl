@@ -16,7 +16,7 @@ task ascat_parser_task_1 {
         echo "$PWD" 
         ls /src
         #**Command goes here**
-		python /src/ascatparser.py ${caveman_tumor} ${copynumber_tumor} ${copynumber_normal} ${ID}.ascat_allelic_capseg.tsv ${ID}.ascat.seg 0 
+		python /src/ascatparser.py ${caveman_tumor} ${copynumber_tumor} ${copynumber_normal} ${ID}.ascat_allelic_capseg.tsv ${ID}.ascat.seg 
     }
 
     output {

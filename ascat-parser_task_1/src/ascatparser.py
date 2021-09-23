@@ -147,6 +147,9 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, use_ascat_norm
 if __name__ == '__main__':
     #expect caveman_tumor, copynumber_tumor, copynumber_normal, allelic_output_path, gistic_output_path
     args = parse_args(sys.argv[1:])
+    
+    print("args:")
+    print(args)
 
     allelic_capseg, gistic = helper(args)
     
