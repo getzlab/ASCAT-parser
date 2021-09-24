@@ -4,6 +4,7 @@ import scipy
 import scipy.stats
 import sys
 import argparse
+import matplotlib.pyplot as plt
 
 
 def parse_args(argv):
@@ -68,7 +69,9 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, use_ascat_norm
     all_cp = cp.copy()
     cp = all_cp[~all_cp['Chromosome'].astype(str).str.contains("X|Y|M")]
     
-    cp = cp[hets(cp, cp_normal)]
+    if not use_ascat_normalization:
+        cp = cp[hets(cp, cp_normal)]
+    
     cp = cp[~cp['Chromosome'].astype(str).str.contains("X|Y|M")]
     
     parsed = pandas.DataFrame(
@@ -144,6 +147,17 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, use_ascat_norm
     return parsed, parsed_gistic
     
     
+def create_plots(args, parsed):
+    plt.scatter(numpy.arange(allelic_capseg.shape[0]), parsed['segmented BAF'])  # TODO plot segmented or normal BAF?
+    plt.title(args.caveman.split('/')[-1].split('.')[0] + " BAF (B-Allele Fraction)")
+    plt.savefig(args.caveman.split('/')[-1].split('.')[0] + ".baf.png")
+    
+    
+    plt.scatter(numpy.arange(allelic_capseg.shape[0]), parsed['f'])  # TODO plot segmented or normal BAF?
+    plt.title(args.caveman.split('/')[-1].split('.')[0] + " copynumber")
+    plt.savefig(args.caveman.split('/')[-1].split('.')[0] + ".cn.png")    
+    
+    
 if __name__ == '__main__':
     #expect caveman_tumor, copynumber_tumor, copynumber_normal, allelic_output_path, gistic_output_path
     args = parse_args(sys.argv[1:])
@@ -156,6 +170,6 @@ if __name__ == '__main__':
     allelic_capseg.to_csv(args.allelic_output, sep='\t', index=False)
     
     gistic.to_csv(args.gistic_output, sep='\t', index=False)
-
-
+    
+    #create_plots(args, allelic_capseg)
 
