@@ -6,7 +6,7 @@ import sys
 import argparse
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
-import statistics
+#import statistics
 
 def parse_args(argv):
     output = argparse.ArgumentParser("ASCAT to Allelic Capseg/GISTIC format parser.")
@@ -18,12 +18,12 @@ def parse_args(argv):
     # file with normal het sites
     output.add_argument('normal_hets', type=str, help="ASCAT normal het site output.")
     # approximate read depth
-    output.add_argument('depth', type=int, help="approximate read depth.")
+    output.add_argument('depth', type=int, help="approximate read depth.",default=100)
 
-    # output file for ABSOLUTE
+    # output acs file for ABSOLUTE
     output.add_argument('allelic_output', type=str, help="Path for allelic capseg output.")
-    # output file for IGV and GISTIC
-    output.add_argument('gistic_output', type=str, help="Path for GISTIC output.")
+    # output seg file for IGV and GISTIC
+    output.add_argument('gistic_output', type=str, help="Path for seg file output.")
     
     # ignore het site BAFs and use segmentedBAF
     # **** WARNING: this option seriously undercalls het site allele shifts ****
