@@ -105,8 +105,9 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, use_asc
     HET_MAF_MIN   = 0.3  # het sites with MAF below not used a het
     HET_ADEP_MIN  = 7    # minimum normal allelic depth for normal het sites
     HET_OTHER_MAX = 0    # max dep for bases not in two two for hets
-    TAU_SIGMA0    = 0.05 # added to sigma.tau in quadrature
-    F_SIGMA0      = 0.01 # added to het MAF std err in quadrature
+    TAU_SIGMA0    = 0.01 # added to sigma.tau in quadrature
+    F_SIGMA0      = 0.002 # added to het MAF std err in quadrature
+    HET_GAP_MAX   = 0.5 # maximum allowed gap in segment of hets (~anti centromere filter)
 
     caveman_segs = pandas.read_csv(caveman_path,
                               names=['chromosome', 'start_bp', 'end_bp', 'cp_major_normal', 'cp_minor_normal',
@@ -159,6 +160,11 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, use_asc
         cpseg = cp[(cp['Position'] >= row['start_bp']) & (cp['Position'] <= row['end_bp']) &
                       (cp['Chromosome'] == int(row['chromosome']))]
 
+        # check for gap fraction of segment.
+        gap=numpy.amax(numpy.diff(cpseg[cpseg['het']]['Position'] ) )
+        xgap = float(gap)/(row['end_bp']-row['start_bp'])
+        if xgap>HET_GAP_MAX:
+            continue
         NTARG = cpseg['targ'].shape[0]
         if NTARG>longest_segment:
             longest_segment=NTARG
