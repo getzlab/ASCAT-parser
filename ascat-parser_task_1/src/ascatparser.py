@@ -205,6 +205,14 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
         if hetden < HET_DEN_MIN:
             continue
 
+        n_probes = sum(cpseg['targ'])
+        if n_probes < 1:
+            print('###############################')
+            print('missing Log R:')
+            print(row)
+            print('###############################')
+            n_probes = sum(cpseg['segmented LogR']>-10)
+
         NTARG = cpseg['targ'].shape[0]
         if NTARG>longest_segment:
             longest_segment=NTARG
@@ -212,8 +220,8 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
 
         DEP = depth
         # baf = cpseg['het']['BAF']
-        stdev=numpy.std(cpseg[cpseg['het']]['BAF'])
-        fse=stdev/numpy.sqrt(cpseg[cpseg['het']].shape[0])
+        #stdev=numpy.std(cpseg[cpseg['het']]['BAF'])
+        #fse=stdev/numpy.sqrt(cpseg[cpseg['het']].shape[0])
         #
         [maf1,mafCI,dep1,depse1]=beta2fit(cpseg[cpseg['het']]['BAF'], DEP)
         #
@@ -229,7 +237,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
         acs_df1 = {'Chromosome': int(row['chromosome']),
                'Start.bp': row['start_bp'],
                'End.bp': row['end_bp'],
-               'n_probes': cpseg[cpseg['targ']].shape[0],
+               'n_probes': n_probes,  # cpseg[cpseg['targ']].shape[0],
                'n_hets': cpseg[cpseg['het']].shape[0],
                'f': maf1, #'f': selected['segmented BAF'].mean()
                'tau':tau1,
@@ -239,7 +247,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
                'sigma.major': fse2,
                'sigma.minor': fse2
                }
-        print(i,maf1,fse,mafCI,float(numpy.diff(mafCI)),dep1,depse1,acs_df1)
+        print(i,maf1,fse2,mafCI,float(numpy.diff(mafCI)),dep1,depse1,acs_df1)
         acs_df = acs_df.append(acs_df1.copy(), ignore_index=True, verify_integrity=True)
         # if i > 10:
         #     break
