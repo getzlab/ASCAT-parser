@@ -203,10 +203,10 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
             print('###############################')
             n_probes = sum(cpseg['segmented LogR']>-10)
 
-        NTARG = cpseg['targ'].shape[0]
-        if NTARG>longest_segment:
-            longest_segment=NTARG
-            longest_segment_stdev_tau = numpy.std(2 * 2 ** cpseg[cpseg['targ']]['Log R'])
+        NTARG = sum(cpseg['targ'])
+        if NTARG > longest_segment:
+            longest_segment = NTARG
+            longest_segment_stdev_tau = numpy.nanstd(2 * 2 ** cpseg[cpseg['targ']]['Log R'])
 
         DEP = depth
         # baf = cpseg['het']['BAF']
