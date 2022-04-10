@@ -6,7 +6,6 @@ import sys
 import argparse
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
-#import statistics
 
 def parse_args(argv):
     output = argparse.ArgumentParser("ASCAT to Allelic Capseg/GISTIC format parser.")
@@ -24,12 +23,6 @@ def parse_args(argv):
 
     # output area
     output.add_argument('output_directory', type=str, help="Path for output.", default='.')
-    # # output seg file for IGV and GISTIC
-    # output.add_argument('gistic_output', type=str, help="Path for seg file output.")
-    #
-    # # ignore het site BAFs and use segmentedBAF
-    # # **** WARNING: this option seriously undercalls het site allele shifts ****
-    # output.add_argument("--use-ascat-normalization", action="store_true", help="Use segmented BAF for f calculation.")
     #
     return output.parse_args(argv)
     
@@ -182,9 +175,6 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
     caveman_segs['length']=caveman_segs['end_bp']-caveman_segs['start_bp']
 
     for i, row in caveman_segs.iterrows():
-        # acs_df1 = pandas.DataFrame(
-        #     columns=['Chromosome', 'Start.bp', 'End.bp', 'n_probes', 'length', 'n_hets', 'f',
-        #              'tau', 'sigma.tau', 'mu.minor', 'sigma.minor', 'mu.major', 'sigma.major']) #, 'cp_major_tumor','cp_minor_tumor'])
 
         if row['chromosome'] in ['X', 'Y', 'MT']:  # redundant legacy check
             continue
