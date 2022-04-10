@@ -6,7 +6,6 @@ import sys
 import argparse
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
-#import statistics
 
 def parse_args(argv):
     output = argparse.ArgumentParser("ASCAT to Allelic Capseg/GISTIC format parser.")
@@ -24,12 +23,6 @@ def parse_args(argv):
 
     # output area
     output.add_argument('output_directory', type=str, help="Path for output.", default='.')
-    # # output seg file for IGV and GISTIC
-    # output.add_argument('gistic_output', type=str, help="Path for seg file output.")
-    #
-    # # ignore het site BAFs and use segmentedBAF
-    # # **** WARNING: this option seriously undercalls het site allele shifts ****
-    # output.add_argument("--use-ascat-normalization", action="store_true", help="Use segmented BAF for f calculation.")
     #
     return output.parse_args(argv)
     
