@@ -175,9 +175,6 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
     caveman_segs['length']=caveman_segs['end_bp']-caveman_segs['start_bp']
 
     for i, row in caveman_segs.iterrows():
-        # acs_df1 = pandas.DataFrame(
-        #     columns=['Chromosome', 'Start.bp', 'End.bp', 'n_probes', 'length', 'n_hets', 'f',
-        #              'tau', 'sigma.tau', 'mu.minor', 'sigma.minor', 'mu.major', 'sigma.major']) #, 'cp_major_tumor','cp_minor_tumor'])
 
         if row['chromosome'] in ['X', 'Y', 'MT']:  # redundant legacy check
             continue
