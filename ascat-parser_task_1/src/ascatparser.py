@@ -46,6 +46,17 @@ def negLL_beta2(parameters,v):
   b = dep*(1-maf)+1
   p1 = numpy.exp(scipy.stats.beta.logpdf(v, a, b))/2+numpy.exp(scipy.stats.beta.logpdf(v, b, a))/2
   neg_LL=-1*numpy.sum(numpy.log(p1+tiny))
+
+  # # penalize maf < 0
+  # if maf < 0:
+  #     neg_LL=neg_LL + 1e3 * maf**2
+  # # penalize maf > 0.5
+  # if maf > 0.5:
+  #     neg_LL = neg_LL + 1e3 * (maf-0.5)**2
+  # # penalize dep < 5
+  # if dep < 5.0:
+  #     neg_LL = neg_LL + 1e4 * (dep-5.0)**2
+
   return neg_LL
 
 def beta2fit(baf,DEP):
@@ -54,15 +65,23 @@ def beta2fit(baf,DEP):
     v1 = baf
     v2 = 1-baf
     v = numpy.concatenate((v1, v2), axis=0)
-    par0 = [0.5, DEP/1.5]
+    maf0 = numpy.mean(v[v<0.5])
+    par0 = [maf0, DEP/1.5]
     #print(par0)
-    mle_model = minimize(negLL_beta2, par0, args=v, method='Nelder-Mead')
-    par0 = mle_model.x
-    if (par0[0] > 0.5):
-        par0[0] = 1 - par0[0]
+    opts = {'disp': True, 'maxiter': 1000, 'xtol': 1e-3}
+    #bnds=((0,0.5),(5,DEP*2))
+    mle_model = minimize(negLL_beta2, par0, args=v, method='Nelder-Mead',options=opts)
+    #mle_model = minimize(negLL_beta2, par0, args=v, method='L-BFGS-B',options=opts,bounds=bnds)
+    par1 = mle_model.x
+    if (par1[0] > 0.5):
+        par1[0] = 1 - par1[0]
 
     maf = mle_model.x[0]
+    if maf < 1e-3:
+        maf=1e-3
     dep = mle_model.x[1]
+    if dep < 5:
+        dep = 5
 
     # Inverse Hessian -> Covariance matrix doesn't seem to work...
     # mle_model2 = minimize(negLL_beta2, par0, args=v, method='BFGS')
@@ -77,12 +96,14 @@ def beta2fit(baf,DEP):
     # maf high CI 2sigma (95%) - log like up by 1 unit
     loghigh=numpy.log10(0.5-maf+tiny)
     maf1 = numpy.logspace(-4 ,loghigh, num=100) + maf
+    maf1 = maf1[maf1>0]
+    maf1 = maf1[maf1<=0.5]
     ll1 =  [None] * len(maf1)
 
     i = 0
     for m1 in maf1:
         ll1[i] = negLL_beta2([m1, dep], v) - ll0 - NSIGMA/2.0
-        i = i+1
+        i = i + 1
 
     khigh = numpy.where(numpy.diff(numpy.sign(ll1)))[0]
     mafH=0.5
@@ -92,11 +113,13 @@ def beta2fit(baf,DEP):
     # maf low CI
     loglow=numpy.log10(maf+tiny)
     maf2 = maf - numpy.logspace(-4 ,loglow, num=100)
+    maf2 = maf2[maf2 > 0]
+    maf2 = maf2[maf2 <= 0.5]
     ll2 = [None] * len(maf2)
     i = 0
     for m1 in maf2:
         ll2[i] = negLL_beta2([m1, dep], v) - ll0 - NSIGMA/2.0
-        i=i+1
+        i = i + 1
 
     klow = numpy.where(numpy.diff(numpy.sign(ll2)))[0]
     mafL=0
@@ -216,7 +239,7 @@ def parser(caveman_path, copynumber_path, copynumber_normal_path, depth, het_den
                'sigma.major': fse2,
                'sigma.minor': fse2
                }
-        print(i,maf1,fse,mafCI,float(numpy.diff(mafCI)),dep1,depse1)
+        print(i,maf1,fse,mafCI,float(numpy.diff(mafCI)),dep1,depse1,acs_df1)
         acs_df = acs_df.append(acs_df1.copy(), ignore_index=True, verify_integrity=True)
         # if i > 10:
         #     break
