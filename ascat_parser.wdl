@@ -17,7 +17,7 @@ task ascat_parser_task_1 {
         echo "$PWD" 
         ls /src
         #**Command goes here**
-	python /src/ascatparser.py ${caveman_tumor} ${copynumber_tumor} ${copynumber_normal} ${DEPTH} ${HET_DENSITY_MIN} .
+	python /src/ascatparser.py ${caveman_tumor} ${copynumber_tumor} ${copynumber_normal} ${DEPTH} ${HET_DENSITY_MIN} ${ID} .
     }
 
     output {
