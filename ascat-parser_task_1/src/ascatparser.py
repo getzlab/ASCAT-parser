@@ -20,7 +20,8 @@ def parse_args(argv):
     output.add_argument('depth', type=int, help="approximate read depth.", default=100)
     # min_het_density
     output.add_argument('het_den_min', type=float, help="het density minimum.", default=2.5e-7)
-
+    # output stub id
+    output.add_argument('id', type=str, help="output file id stub .")
     # output area
     output.add_argument('output_directory', type=str, help="Path for output.", default='.')
     #
@@ -39,16 +40,6 @@ def negLL_beta2(parameters,v):
   b = dep*(1-maf)+1
   p1 = numpy.exp(scipy.stats.beta.logpdf(v, a, b))/2+numpy.exp(scipy.stats.beta.logpdf(v, b, a))/2
   neg_LL=-1*numpy.sum(numpy.log(p1+tiny))
-
-  # # penalize maf < 0
-  # if maf < 0:
-  #     neg_LL=neg_LL + 1e3 * maf**2
-  # # penalize maf > 0.5
-  # if maf > 0.5:
-  #     neg_LL = neg_LL + 1e3 * (maf-0.5)**2
-  # # penalize dep < 5
-  # if dep < 5.0:
-  #     neg_LL = neg_LL + 1e4 * (dep-5.0)**2
 
   return neg_LL
 
@@ -352,7 +343,8 @@ def create_plots(args, acs_df, cp):
     if outputdir[-1] != "/":
         outputdir = outputdir + '/'
 
-    png_file=outputdir + args.caveman_segments.split('/')[-1].split('.')[0] + ".ascat.acs.png"
+    #png_file=outputdir + args.caveman_segments.split('/')[-1].split('.')[0] + ".ascat.acs.png"
+    png_file=outputdir + args.id + ".ascat.acs.png"
 
     plt.savefig(png_file)
     
@@ -366,15 +358,19 @@ if __name__ == '__main__':
 
     allelic_capseg, gistic, cp  = helper(args)
 
+    id = args.id
+
     outputdir = args.output_directory
     if outputdir[-1] != '/':
         outputdir=outputdir + '/'
 
-    AllelicCapSeg_file= outputdir + args.caveman_segments.split('/')[-1].split('.')[0] + ".ascat.acs.tsv"
+    #AllelicCapSeg_file= outputdir + args.caveman_segments.split('/')[-1].split('.')[0] + ".ascat.acs.tsv"
+    AllelicCapSeg_file= outputdir + id + ".ascat.acs.tsv"
 
     allelic_capseg.to_csv(AllelicCapSeg_file, sep='\t', index=False, float_format="%.5f")
 
-    Seg_file = outputdir + args.caveman_segments.split('/')[-1].split('.')[0] + ".ascat.seg"
+    #Seg_file = outputdir + args.caveman_segments.split('/')[-1].split('.')[0] + ".ascat.seg"
+    Seg_file = outputdir + id + ".ascat.seg"
 
 
     gistic.to_csv(Seg_file, sep='\t', index=False, float_format="%.5f")
