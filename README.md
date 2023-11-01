@@ -2,8 +2,6 @@
 
 This repo contains the necessary functions to parse [ASCATNGS](https://pubmed.ncbi.nlm.nih.gov/27930809/) ([repo](https://github.com/cancerit/ascatNgs)) outputs to an allelic capseg equivalent to run ABSOLUTE.
 
-# ASCAT Parser
-
 Some changes were made relative to ascatNgs:
 Standard ascatNGS VAF fits were suboptimal. The signature of poor het VAF fitting appears as "=" (equal signs) across ABSOLUTE allelic copy ratio profiles. Occasional "=" aCR levels can be real, but if most the genome has a small allele shift, then there is a problem. 
 ASCAT-parser minimizes false shifts away from VAF=0.5 using a symmetric peaked beta distribution acround 0.5. This is done for each segment with at least one het.
